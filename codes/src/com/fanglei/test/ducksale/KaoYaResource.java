@@ -15,7 +15,7 @@ public class KaoYaResource {
 	 * 生产烤鸭
 	 */
 	public synchronized void product(String name){
-		if(flag){
+		while (flag){
 			//此时有烤鸭，等待
 			try {
 				this.wait();
@@ -35,7 +35,7 @@ public class KaoYaResource {
 	 * 消费烤鸭
 	 */
 	public synchronized void consume(){
-		if(!flag){//如果没有烤鸭就等待
+		while(!flag){//如果没有烤鸭就等待
 			try{this.wait();}catch(InterruptedException e){}
 		}
 		System.out.println(Thread.currentThread().getName()+"...消费者........"+this.name);//消费烤鸭1
