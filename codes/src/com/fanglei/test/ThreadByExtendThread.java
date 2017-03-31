@@ -1,7 +1,7 @@
 package com.fanglei.test;
 
 /**
- * Í¨¹ıextend ThreadÀ´ÊµÏÖÏß³Ì
+ * é€šè¿‡extend Threadæ¥å®ç°çº¿ç¨‹
  * @author Owen
  * @version 2017-03-31
  *
@@ -10,11 +10,11 @@ public class ThreadByExtendThread extends Thread
 {
 	
 	/**
-	 * ÊµÏÖrun()º¯Êı
+	 * å®ç°run()å‡½æ•°
 	 */
 	public void run()
 	{
-		System.out.println("I'am in a thread that extends Thread!");
+		System.out.println("I'am in a thread that extends Thread!" + " The thread name is " + currentThread().getName());
 	}
 	
 }
