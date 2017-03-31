@@ -3,12 +3,12 @@ package com.fanglei.test;
 /**
  * Created by Owen on 2017/3/31.
  */
-public class TestTicket
+public class TestTicketRight
 {
 	public static void main(String[] arg)
 	{
 		/* 创建一个线程任务对象 */
-		Ticket t = new Ticket();
+		TicketRight t = new TicketRight();
 
 		/* 创建4个线程同事卖票*/
 		Thread t1 = new Thread(t);
