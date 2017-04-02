@@ -10,7 +10,7 @@ public class TestTicketRight
 		/* 创建一个线程任务对象 */
 		TicketRight t = new TicketRight();
 
-		/* 创建4个线程同事卖票*/
+		/* 创建4个线程同时卖票*/
 		Thread t1 = new Thread(t);
 		Thread t2 = new Thread(t);
 		Thread t3 = new Thread(t);
