@@ -1,4 +1,6 @@
-package com.fanglei.test;
+package com.fanglei.test.ticket;
+
+import com.fanglei.test.ticket.TicketSynchronized;
 
 /**
  * Created by Owen on 2017/3/31.

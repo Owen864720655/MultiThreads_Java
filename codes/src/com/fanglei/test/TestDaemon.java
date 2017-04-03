@@ -18,7 +18,7 @@ public class TestDaemon
 	}
 
 	static class DaemonRunner implements Runnable{
-		@Override
+
 		public void run()
 		{
 			try {

@@ -1,4 +1,4 @@
-package com.fanglei.test;
+package com.fanglei.test.ticket;
 
 /**
  * Created by Owen on 2017/3/31.

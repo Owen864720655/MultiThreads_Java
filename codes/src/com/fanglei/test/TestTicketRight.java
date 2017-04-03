@@ -1,5 +1,7 @@
 package com.fanglei.test;
 
+import com.fanglei.test.ticket.TicketRight;
+
 /**
  * Created by Owen on 2017/3/31.
  */

@@ -1,4 +1,4 @@
-package com.fanglei.test;
+package com.fanglei.test.ticket;
 
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;

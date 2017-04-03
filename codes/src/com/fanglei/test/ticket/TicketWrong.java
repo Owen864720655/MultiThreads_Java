@@ -1,4 +1,4 @@
-package com.fanglei.test;
+package com.fanglei.test.ticket;
 
 /**
  * 模拟买票线程
