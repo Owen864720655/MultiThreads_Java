@@ -19,9 +19,9 @@ public class TestBlockQueue {
 
 		double timeStart = System.currentTimeMillis();
 
-		int maxSizeBlockingQueue = 500000;
-		int numThreadProducers = 10;
-		int maxSizeTelnumsProducers = 15000;
+		int maxSizeBlockingQueue = 500;
+		int numThreadProducers = 5;
+		int maxSizeTelnumsProducers = 150;
 		Resource resource = new Resource(maxSizeBlockingQueue, numThreadProducers);
 
 		ExecutorService executorService = Executors.newCachedThreadPool();
@@ -32,12 +32,12 @@ public class TestBlockQueue {
 			int taskCountProducerBase = 10;
 			int taskCountProducerRandom = 10;
 			int taskCountProducer = new Random().nextInt(taskCountProducerRandom) + taskCountProducerBase;
-			taskCountProducer = 5;
+			taskCountProducer = 15;
 			executorService.execute(new Producer(resource, maxSizeTelnumsProducers, taskCountProducer));
 		}
 
-		int numThreadConsumers = 5;
-		int sizeConsumeTelnums = 500000;
+		int numThreadConsumers = 10;
+		int sizeConsumeTelnums = 50;
 //		ExecutorService executorServiceConsumers = Executors.newFixedThreadPool(numThreadConsumers);
 		for (int i = 0; i < numThreadConsumers; i++)
 		{
@@ -430,7 +430,7 @@ class Consumer implements Runnable
 	 */
 	public List<ResourceObject> matchPattern(List<ResourceObject> params)
 	{
-		System.out.println("params.size() in matchPattern() " + params.size());
+		System.out.println(Thread.currentThread().getName() + " params.size() in matchPattern() " + params.size());
 		List<ResourceObject> results = new ArrayList<>();
 //		ResourceObject result = new ResourceObject();
 
@@ -447,7 +447,7 @@ class Consumer implements Runnable
 				results.add(param);
 			}
 		}
-		System.out.println("results.size() in matchPattern() " + results.size());
+		System.out.println(Thread.currentThread().getName() + " results.size() in matchPattern() " + results.size());
 		return results;
 	}
 
@@ -482,14 +482,17 @@ class Consumer implements Runnable
 					System.out.println("The matched telnums size() " + results.size()); 
 //					for (ResourceObject result : results) {
 //						System.out.println("Consumer Thread " + Thread.currentThread().getName() + " consumes one resource " + result.toString());
-					}
+//					}
 				}
 			}
 			else {
-				List<ResourceObject> results = consumerManyAndMatchPattern(resource.getBlockingQueueSize());
+				if(resource.getBlockingQueueSize() > 0) {
+					List<ResourceObject> results = consumerManyAndMatchPattern(resource.getBlockingQueueSize());
 //				for (ResourceObject result : results) {
 //					System.out.println("Consumer Thread " + Thread.currentThread().getName() + " consumes one resource " + result.toString());
-				break;
+					System.out.println("The matched telnums size() " + results.size());
+					break;
+//				}
 				}
 			}
 
