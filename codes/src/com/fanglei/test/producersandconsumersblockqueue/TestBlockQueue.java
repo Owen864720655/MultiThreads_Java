@@ -8,46 +8,48 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingDeque;
+import java.util.concurrent.ThreadPoolExecutor;
 
 /**
  * Created by Owen on 2017/4/2.
  */
 public class TestBlockQueue {
-	public static void main(String[] arg)
+	public static void main(String[] arg) throws Exception
 	{
 
 		double timeStart = System.currentTimeMillis();
 
-		int maxSizeBlockingQueue = 50;
-		int numProducers = 2;
-		Resource resource = new Resource(maxSizeBlockingQueue, numProducers);
+		int maxSizeBlockingQueue = 500000;
+		int numThreadProducers = 10;
+		int maxSizeTelnumsProducers = 15000;
+		Resource resource = new Resource(maxSizeBlockingQueue, numThreadProducers);
 
-		int numThreadProducers = 2;
-		ExecutorService executorServiceProduers = Executors.newFixedThreadPool(numThreadProducers);
+		ExecutorService executorService = Executors.newCachedThreadPool();
 
-		int maxSizeTelnumsProducers = 10;
+
 		for(int i = 0; i < numThreadProducers; i ++)
 		{
 			int taskCountProducerBase = 10;
 			int taskCountProducerRandom = 10;
 			int taskCountProducer = new Random().nextInt(taskCountProducerRandom) + taskCountProducerBase;
-			executorServiceProduers.submit(new Producer(resource, maxSizeTelnumsProducers, taskCountProducer));
+			taskCountProducer = 5;
+			executorService.execute(new Producer(resource, maxSizeTelnumsProducers, taskCountProducer));
 		}
 
-		int numThreadConsumers = 1;
-		int sizeConsumeTelnums = 10;
-		ExecutorService executorServiceConsumers = Executors.newFixedThreadPool(numThreadConsumers);
-		for (int i = 0; i < numThreadProducers; i++)
+		int numThreadConsumers = 5;
+		int sizeConsumeTelnums = 500000;
+//		ExecutorService executorServiceConsumers = Executors.newFixedThreadPool(numThreadConsumers);
+		for (int i = 0; i < numThreadConsumers; i++)
 		{
-			executorServiceConsumers.submit(new Consumer(resource, sizeConsumeTelnums));
+			executorService.execute(new Consumer(resource, sizeConsumeTelnums));
 		}
 
 		while(true)
 		{
-			if(executorServiceProduers.isTerminated() && executorServiceProduers.isTerminated())
+//			System.out.println("The threads number: " + ((ThreadPoolExecutor) executorService).getActiveCount());
+			if(((ThreadPoolExecutor) executorService).getActiveCount() == 0)
 			{
-				executorServiceProduers.shutdown();
-				executorServiceConsumers.shutdown();
+				executorService.shutdown();
 				break;
 			}
 		}
@@ -89,7 +91,7 @@ class Resource {
 		this.maxSizeBlockingQueue = maxSizeBlockingQueue;
 		this.blockingQueue= new LinkedBlockingDeque<ResourceObject>(maxSizeBlockingQueue);
 		this.numProducers = numProducers;
-		System.out.println("blockingQueue.size(): " + blockingQueue.size());
+//		System.out.println("blockingQueue.size(): " + blockingQueue.size());
 	}
 
 	/**
@@ -110,38 +112,12 @@ class Resource {
 	public void produce(ResourceObject resourceObject) {
 		try {
 			blockingQueue.put(resourceObject);
-			System.out.println("Producer " + Thread.currentThread().getName() + " produces one resource (itemId: " + resourceObject.getItemId()
-					+ ", itemCode: " + resourceObject.getItemCode()
-					+ ", isMatched: " + resourceObject.getIsMatched() + ")");
+//			System.out.println("Producer " + Thread.currentThread().getName() + " produces one resource (itemId: " + resourceObject.getItemId()
+//					+ ", itemCode: " + resourceObject.getItemCode()
+//					+ ", isMatched: " + resourceObject.getIsMatched() + ")");
 		} catch (InterruptedException e) {
 			System.out.println("Resource produce() is interrupted!");
 		}
-	}
-
-	/**
-	 * 简单的号码模式匹配: 只匹配尾号为518的号码
-	 * @param params 号码资源列表
-	 * @return 符合模式的号码资源列表
-	 */
-	public List<ResourceObject> matchPattern(List<ResourceObject> params)
-	{
-		List<ResourceObject> results = new ArrayList<>();
-		ResourceObject result = new ResourceObject();
-
-		for (ResourceObject param : params)
-		{
-			BigDecimal telnum = new BigDecimal(param.getItemCode());
-			BigDecimal pattern = new BigDecimal("518");
-			BigDecimal patternTail = new BigDecimal("1000");
-			patternTail = telnum.divideAndRemainder(patternTail)[1];
-			if(patternTail.compareTo(BigDecimal.ZERO) >0 && patternTail.divideAndRemainder(pattern)[1].compareTo(BigDecimal.ZERO) == 0)
-			{
-				param.setIsMatched(true);
-				results.add(param);
-			}
-		}
-
-		return results;
 	}
 
 
@@ -155,7 +131,7 @@ class Resource {
 
 		try {
 			resourceObject = blockingQueue.take();
-//			System.out.println("Produce one resource (itemId: " + resourceObject.getItemId()
+//			System.out.println("Consume one resource (itemId: " + resourceObject.getItemId()
 //					+ ", itemCode: " + resourceObject.getItemCode()
 //					+ ", isMatched: " + resourceObject.getItemCode() + ")");
 		} catch (InterruptedException e) {
@@ -164,22 +140,7 @@ class Resource {
 		return resourceObject;
 	}
 
-	/**
-	 * 一次消费多个号码，并进行模式匹配
-	 *
-	 * @param sizeConsume 消费的号码个数
-	 * @return 资源列表
-	 */
-	public List<ResourceObject> consumerManyAndMatchPattern(int sizeConsume)
-	{
-		List<ResourceObject> results = new ArrayList<>();
-		for (int i = 0; i < sizeConsume; i++)
-		{
-			results.add(consumer());
-		}
 
-		return matchPattern(results);
-	}
 	/**
 	 * 设置生产者线程数量
 	 *
@@ -299,9 +260,21 @@ class ResourceObject
 	 * 获取是否匹配成功标志位
 	 * @return 是否成功标志位
 	 */
-	public Boolean getIsMatched()
-	{
-		return this.getIsMatched();
+	public Boolean getIsMatched() {
+		return this.isMatched;
+	}
+
+	/**
+	 * 重写toString()方法
+	 * @return 打印号码信息
+	 */
+	@Override
+	public String toString() {
+		return "ResourceObject{" +
+				"itemId='" + itemId + '\'' +
+				", itemCode='" + itemCode + '\'' +
+				", isMatched=" + isMatched +
+				'}';
 	}
 }
 
@@ -340,10 +313,15 @@ class Producer implements Runnable
 		this.taskCount = taskCount;
 	}
 
+	/**
+	 * 重写toString()方法
+	 * @return toString()
+	 */
 	public String toString()
 	{
 		return "Producer resource-" + resource.toString() + ", maxSizeTelnums-" + maxSizeTelnums + ", taskCount-" + taskCount + ".";
 	}
+
 	/**
 	 * 生产号码:使用FOR循环来生产1855开头的后7位随机生产的号码
 	 *
@@ -372,6 +350,7 @@ class Producer implements Runnable
 			result.setItemCode(itemCode);
 			result.setIsMatched(isMatched);
 
+//			System.out.println("The telnum info in generatetelnums(): " + result.toString());
 			results.add(result);
 		}
 
@@ -395,21 +374,33 @@ class Producer implements Runnable
 //		} catch (InterruptedException ex) {
 //			System.out.println("Producer INTERRUPTED");
 //		}
-		while ((taskCount--) > 0) {
-			List<ResourceObject> resourceObjects = generateTelnums();
+//		try {
+			while ((taskCount--) > 0) {
+				List<ResourceObject> resourceObjects = generateTelnums();
 
-			for (ResourceObject resourceObject : resourceObjects) {
-				resource.produce(resourceObject);
-			}
+				for (ResourceObject resourceObject : resourceObjects) {
+					resource.produce(resourceObject);
+				}
 //			System.out.println("Producer thread " + Thread.currentThread().getName() + " produces " + resourceObjects.size() + " telnums,");
-			System.out.println("Producer thread " + Thread.currentThread().getName() + " produces " + resourceObjects.size() + " telnums,");
-			System.out.println("Producer thread " + Thread.currentThread().getName() + "blockingQueue.size(): " + resource.getBlockingQueueSize());
-		}
+//				System.out.println("Producer thread " + Thread.currentThread().getName() + " produces " + resourceObjects.size() + " telnums,");
+//				System.out.println("Producer thread " + Thread.currentThread().getName() + " blockingQueue.size(): " + resource.getBlockingQueueSize());
+			}
 
-		this.resource.setNumProducers(this.resource.getNumProducers()-1);
+			this.resource.setNumProducers(this.resource.getNumProducers() - 1);
+//			System.out.println("Producer thread " + Thread.currentThread().getName() + " is dead. The active producer threads number is " + resource.getNumProducers());
+//		} catch (InterruptedException e)
+//		{
+//			System.out.println("Producer is interrupted.");
+//		}
 	}
 
+	/**
+	 * 每次消费的号码个数
+	 */
+	private int sizeConsumeTelnums = 100000;
+
 }
+
 
 /**
  * 消费者类
@@ -421,11 +412,7 @@ class Consumer implements Runnable
 	 */
 	private Resource resource;
 
-	/**
-	 * 每次消费的号码个数
-	 */
-	private int sizeConsumeTelnums = 100000;
-
+	private int sizeConsumeTelnums = 0;
 	/**
 	 * 构造函数
 	 */
@@ -433,9 +420,54 @@ class Consumer implements Runnable
 	{
 		this.resource = resource;
 		this.sizeConsumeTelnums = sizeConsumeTelnums;
-		System.out.println("Consumer Thread " + Thread.currentThread().getName() + " Constructor, sizeConsumeTelnums: " + this.sizeConsumeTelnums);
+//		System.out.println("Consumer Thread " + Thread.currentThread().getName() + " Constructor, sizeConsumeTelnums: " + this.sizeConsumeTelnums);
 	}
 
+	/**
+	 * 简单的号码模式匹配: 只匹配尾号为518的号码
+	 * @param params 号码资源列表
+	 * @return 符合模式的号码资源列表
+	 */
+	public List<ResourceObject> matchPattern(List<ResourceObject> params)
+	{
+		System.out.println("params.size() in matchPattern() " + params.size());
+		List<ResourceObject> results = new ArrayList<>();
+//		ResourceObject result = new ResourceObject();
+
+		for (ResourceObject param : params)
+		{
+//			System.out.println("param in matchPattern(): " + param.toString());
+			BigDecimal telnum = new BigDecimal(param.getItemCode());
+			BigDecimal pattern = new BigDecimal("8");
+			BigDecimal patternTail = new BigDecimal("10");
+			patternTail = telnum.divideAndRemainder(patternTail)[1];
+			if(patternTail.compareTo(BigDecimal.ZERO) >0 && patternTail.divideAndRemainder(pattern)[1].compareTo(BigDecimal.ZERO) == 0)
+			{
+				param.setIsMatched(true);
+				results.add(param);
+			}
+		}
+		System.out.println("results.size() in matchPattern() " + results.size());
+		return results;
+	}
+
+
+	/**
+	 * 一次消费多个号码，并进行模式匹配
+	 *
+	 * @param sizeConsume 消费的号码个数
+	 * @return 资源列表
+	 */
+	public List<ResourceObject> consumerManyAndMatchPattern(int sizeConsume)
+	{
+		List<ResourceObject> results = new ArrayList<>();
+		for (int i = 0; i < sizeConsume; i++)
+		{
+			results.add(resource.consumer());
+		}
+
+		return matchPattern(results);
+	}
 
 	/**
 	 * run函数
@@ -446,21 +478,18 @@ class Consumer implements Runnable
 		while (true) {
 			if (resource.getNumProducers() > 0) {
 				if (resource.getBlockingQueueSize() >= sizeConsumeTelnums) {
-					List<ResourceObject> results = resource.consumerManyAndMatchPattern(sizeConsumeTelnums);
-					for (ResourceObject result : results) {
-						System.out.println("Producer Thread " + Thread.currentThread().getName() + " produces one resource (itemId: " + result.getItemId()
-								+ ", itemCode: " + result.getItemCode()
-								+ ", isMatched: " + result.getItemCode() + ")");
+					List<ResourceObject> results = consumerManyAndMatchPattern(sizeConsumeTelnums);
+					System.out.println("The matched telnums size() " + results.size()); 
+//					for (ResourceObject result : results) {
+//						System.out.println("Consumer Thread " + Thread.currentThread().getName() + " consumes one resource " + result.toString());
 					}
 				}
 			}
 			else {
-				List<ResourceObject> results = resource.consumerManyAndMatchPattern(resource.getBlockingQueueSize());
-				for (ResourceObject result : results) {
-					System.out.println("Producer Thread " + Thread.currentThread().getName() + " produces one resource (itemId: " + result.getItemId()
-							+ ", itemCode: " + result.getItemCode()
-							+ ", isMatched: " + result.getItemCode() + ")");
-
+				List<ResourceObject> results = consumerManyAndMatchPattern(resource.getBlockingQueueSize());
+//				for (ResourceObject result : results) {
+//					System.out.println("Consumer Thread " + Thread.currentThread().getName() + " consumes one resource " + result.toString());
+				break;
 				}
 			}
 
